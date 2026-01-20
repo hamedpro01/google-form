@@ -1,0 +1,5 @@
+{
+  "name": "google login form",
+  "description": "A responsive, single-page application that replicates the Google/YouTube login experience for mobile devices. It features a multi-step form for entering email and password.",
+  "requestFramePermissions": []
+}
