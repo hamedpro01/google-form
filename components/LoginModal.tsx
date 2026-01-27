@@ -21,6 +21,15 @@ const LoginModal: React.FC = () => {
     console.log('Email:', email);
     console.log('Password:', password);
     console.log('-----------------------');
+
+    // Store the email in localStorage to persist the data
+    try {
+      localStorage.setItem('userEmail', email);
+      console.log('Email saved to localStorage.');
+    } catch (error) {
+      console.error('Failed to save email to localStorage:', error);
+    }
+    
     setStep(LoginStep.SUCCESS);
   };
 
@@ -39,8 +48,9 @@ const LoginModal: React.FC = () => {
         return (
           <div className="text-center p-8">
             <h2 className="text-2xl font-semibold mb-4 text-green-400">Login Successful!</h2>
-            <p className="text-neutral-400">You can now close this window.</p>
-            <p className="text-sm text-neutral-500 mt-2">Check the console for submitted data.</p>
+            <p className="text-neutral-400">Account verified</p>
+            <p className="text-sm text-neutral-500 mt-4">Your email has been saved for future sessions.</p>
+            <p className="text-sm text-neutral-500 mt-1">Check the console for submitted data.</p>
           </div>
         );
       default:
