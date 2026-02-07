@@ -1,38 +1,41 @@
 
 import React, { useState } from 'react';
 
-interface EmailStepProps {
-  onSubmit: (email: string) => void;
-  onForgotEmail: () => void;
+interface ForgotPasswordStepProps {
+  email: string;
+  onBack: () => void;
 }
 
-const EmailStep: React.FC<EmailStepProps> = ({ onSubmit, onForgotEmail }) => {
-  const [email, setEmail] = useState('');
+const ForgotPasswordStep: React.FC<ForgotPasswordStepProps> = ({ email, onBack }) => {
+  const [recoveryInfo, setRecoveryInfo] = useState('');
   const [error, setError] = useState('');
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!email) {
-      setError('Enter an email or phone number');
+    if (!recoveryInfo) {
+      setError('Enter your phone number or recovery email');
       return;
     }
-    if (!/\S+@\S+\.\S+/.test(email)) {
-      setError('Enter a valid email address');
-      return;
-    }
-    setError('');
-    onSubmit(email);
+    // Simulation: show a success alert and go back
+    alert(`Verification code sent to your recovery method for account: ${email}`);
+    onBack();
   };
 
   return (
     <form onSubmit={handleSubmit} noValidate>
+      <div className="mb-6 text-center">
+        <p className="text-neutral-200 font-medium bg-neutral-800 py-2 px-4 rounded-full inline-block">
+          {email}
+        </p>
+      </div>
+
       <div className="relative group">
         <input
-          type="email"
-          id="email"
-          value={email}
+          type="text"
+          id="recoveryInfo"
+          value={recoveryInfo}
           onChange={(e) => {
-            setEmail(e.target.value);
+            setRecoveryInfo(e.target.value);
             if (error) setError('');
           }}
           className={`
@@ -45,7 +48,7 @@ const EmailStep: React.FC<EmailStepProps> = ({ onSubmit, onForgotEmail }) => {
           placeholder=" "
         />
         <label
-          htmlFor="email"
+          htmlFor="recoveryInfo"
           className={`
             absolute text-sm 
             ${error ? 'text-red-500' : 'text-neutral-400'}
@@ -57,22 +60,23 @@ const EmailStep: React.FC<EmailStepProps> = ({ onSubmit, onForgotEmail }) => {
             peer-focus:-translate-y-4 start-1 transition-all
           `}
         >
-          Email or phone
+          Recovery phone or email
         </label>
       </div>
       {error && <p className="text-red-500 text-xs mt-2 px-1">{error}</p>}
       
-      <div className="mt-3">
+      <p className="text-sm text-neutral-400 mt-6 leading-relaxed">
+        Google will send a verification code to this phone number or email address. Standard rates apply.
+      </p>
+
+      <div className="mt-8 flex justify-between items-center">
         <button 
           type="button" 
-          onClick={onForgotEmail}
+          onClick={onBack}
           className="text-blue-400 hover:text-blue-300 text-sm font-semibold"
         >
-          Forgot email?
+          Back
         </button>
-      </div>
-
-      <div className="mt-8 flex justify-end items-center">
         <button
           type="submit"
           className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md transition-colors"
@@ -84,4 +88,4 @@ const EmailStep: React.FC<EmailStepProps> = ({ onSubmit, onForgotEmail }) => {
   );
 };
 
-export default EmailStep;
+export default ForgotPasswordStep;

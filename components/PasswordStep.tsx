@@ -7,9 +7,10 @@ interface PasswordStepProps {
   email: string;
   onSubmit: (password: string) => void;
   onBack: () => void;
+  onForgotPassword: () => void;
 }
 
-const PasswordStep: React.FC<PasswordStepProps> = ({ email, onSubmit, onBack }) => {
+const PasswordStep: React.FC<PasswordStepProps> = ({ email, onSubmit, onBack, onForgotPassword }) => {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
@@ -82,7 +83,11 @@ const PasswordStep: React.FC<PasswordStepProps> = ({ email, onSubmit, onBack }) 
       </div>
       
       <div className="mt-8 flex justify-between items-center">
-        <button type="button" className="text-blue-400 hover:text-blue-300 text-sm font-semibold">
+        <button 
+          type="button" 
+          onClick={onForgotPassword}
+          className="text-blue-400 hover:text-blue-300 text-sm font-semibold"
+        >
           Forgot password?
         </button>
         <button

